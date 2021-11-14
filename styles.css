@@ -1,7 +1,11 @@
-#imageSrc {
-  width: 40%;
+#imageSrc,
+#canvaspreview,
+#canvasOutput {
+  width: 20%;
   height: auto;
 }
+
+/**Hide the two result containers in the beggining**/
 
 .slidecontainer {
   width: 100%; /* Width of the outside container */
