@@ -6,17 +6,18 @@
 <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-<h2>Count cells in no-time !</h2>
-<p id="status">OpenCV.js is loading...</p>
-<div>
-  <div class="inputoutput">
+
+<div class="container">
+  <h2>Count cells in no-time !</h2>
+
+  <div id="inputDiv">
+    <h3>Step 1: Upload an image</h3>
     <img id="imageSrc" />
     <div class="caption">
-      <h3>Step 1: Upload an image</h3>
-      <input type="file" id="fileInput" name="file" />
+      <input type="file" id="fileInput" name="file" disabled/>
     </div>
   </div>
-  <div class="inputoutput">
+  <div id="resultDiv">
     <h3>Step 2: Adjust the slider so that the cells are as clear as possible </h3>
     <canvas id="canvaspreview" ></canvas>
     <div class="caption">Preview</div>
@@ -26,18 +27,18 @@
       <p id="thresholdValue"></p>
     </div>
 
-  </div>
-  <div class="inputoutput">
-    <h3 id="results">Your results are ready ! ...You also get an awesome picture in the process !!</h3>
+
+    <h3>There are approximately <span id="results" style="color:MediumSeaGreen;"></span> cells in your picture !</h3>
     <canvas id="canvasOutput" ></canvas>
-    <div class="caption">...You also get this amazing picture !</div>
+    <div class="caption">...You also get some abstract art in the process !</div>
   </div>
 </div>
 <script type="text/javascript">
 
   //Load opencv
   function onOpenCvReady() {
-      document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+      //Enable upload file button
+      document.getElementById('fileInput').disabled = false;
   }
 
   //Threshold and contours
@@ -48,13 +49,11 @@
   }, false);
   imgElement.onload = function() {
     //Threshold
-    //let src = cv.imread('imageSrc');
-    //let dst = cv.Mat.zeros(src.cols, src.rows, cv.CV_8UC3);
-    //cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
-    //cv.threshold(src, src, 200, 200, cv.THRESH_BINARY);
-    //cv.imshow('canvaspreview', src);
     applyThreshold(200)
     drawTheContours(200)
+
+    //Show the divs with results
+    document.getElementById("resultDiv").style.display = "block"
   }
 
   function calculateExternalContours(thresValue, method) {
@@ -69,8 +68,6 @@
     cv.threshold(image, image, thresValue, 200, cv.THRESH_BINARY);
 
     cv.findContours(image, extContour, extHierarchy, method, cv.CHAIN_APPROX_SIMPLE); //cv.RETR_EXTERNAL
-    //console.log(cv.arcLength(extContour.get(0), true))
-    //console.log("External are: ", extContour.size())
 
     return extContour
   }
@@ -86,12 +83,31 @@
     }
   }
 
+  //Calculate the number of different colors in image
+  /**function getDifferentColors(outCanvas) {
+    var ctx = outCanvas.getContext("2d");
+    var canvData = ctx.getImageData(0, 0, outCanvas.width, outCanvas.height);
+    var allColors = new Array();
+
+    for (let i = 0; i < canvData.data.length; i += 4) {
+      rgb = [canvData.data[i], canvData.data[i+1], canvData.data[i+2]]
+      //console.log(rgb)
+
+      if (!allColors.includes(rgb)) {
+        allColors.push(rgb)
+      }
+    }
+
+    return allColors
+  }**/
+
   function drawTheContours(thresValue) {
     //Contours
     let contours = new cv.MatVector();
     let hierarchy = new cv.Mat();
     let src = cv.imread('imageSrc');
-    let dst = cv.Mat.zeros(src.cols, src.rows, cv.CV_8UC3);
+    //let dst = cv.Mat.zeros(src.cols, src.rows, cv.CV_8UC3);
+    let dst = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
 
     //Array of used colors
     var usedColors = [];
@@ -100,14 +116,16 @@
     cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
     cv.threshold(src, src, thresValue, 200, cv.THRESH_BINARY);
 
+    //Erode
+    /**let M = cv.Mat.ones(5, 5, cv.CV_8U);
+    let anchor = new cv.Point(-1, -1);
+    cv.erode(src, src, M, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());**/
+
     cv.findContours(src, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE); //RETR_TREE, RETR_CCOMP
     // Number of contours: contours.size()
     console.log("Total contours: ",contours.size())
-    //console.log(contours)
 
-    //Check if there is only one external contour => don't paint it inside
-    //Paint the rest contours inside
-    //run drawContours on prev result
+    //Find how many externals there are
     var allExternal = calculateExternalContours(thresValue, cv.RETR_EXTERNAL)
     console.log("External conts are: ",allExternal.size())
 
@@ -115,7 +133,7 @@
       for (let i = 0; i < contours.size(); ++i) {
         
         for (let j = 0; j < allExternal.size(); ++j) {
-          //console.log(cv.arcLength(allExternal.get(j), true), "AND", cv.arcLength(contours.get(i), true))
+
           if (cv.arcLength(allExternal.get(j), true) == cv.arcLength(contours.get(i), true)) {
             console.log("It is included")
             cv.drawContours(dst, contours, i, [100,100,100,100], 1, cv.LINE_8, hierarchy, 0);
@@ -138,7 +156,6 @@
         
         let color = pickColor(usedColors)
         cv.drawContours(dst, contours, i, color, -1, cv.LINE_8, hierarchy, 0);
-        //cv.drawContours(dst, contours, i, [100,100,100,100], -1, cv.LINE_8, hierarchy, 0);//paints the interior of all contours
       }
     }
 
@@ -150,30 +167,18 @@
     //Draw image on canvas
     cv.imshow('canvasOutput', dst);
 
+    //Count the different colors
+    /**var allDifColors = getDifferentColors(canvas);
+    console.log("The different colors are: ", allDifColors.length)**/
+
     //TODO the plan is to count all different colors in image = cells in image
     console.log("Total colors used: ", usedColors.length) //Might be wrong because two colors may be overlapping
     console.log("All contours are: ", contours.size())
 
     //Show the results to the user
-    var resultText = document.getElementById('results').innerHTML = "There are aproximately " + usedColors.length + " cells in your picture !"
+    var resultText = document.getElementById('results').innerHTML = usedColors.length
 
     src.delete(); dst.delete(); contours.delete(); hierarchy.delete();
-
-    /**for (let i = 0; i < contours.size(); ++i) {
-        let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
-        //console.log(color)
-        //console.log(contours.get(i).type()) // gets the type of mat (contours are CV_32S)
-        //console.log(cv.arcLength(contours.get(i), true))
-        //cv.drawContours(dst, contours, i, color, 1, cv.LINE_8, hierarchy, 0);
-        cv.drawContours(dst, contours, i, [100,100,100,100], -1, cv.LINE_8, hierarchy, 0);//paints the interior of all contours
-        //console.log("3")
-      }
-
-      //Draw image on canvas
-      cv.imshow('canvasOutput', dst);
-      //console.log("Finished")
-      //scaleToFit(outputCanvas);
-      src.delete(); dst.delete(); contours.delete(); hierarchy.delete();**/
   }
 
   //TODO Resize canvas to fit image
@@ -204,7 +209,66 @@
     //let dst = cv.Mat.zeros(src.cols, src.rows, cv.CV_8UC3);
     cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
     cv.threshold(src, src, thresValue, 200, cv.THRESH_BINARY);
+
+    //Erode
+    /**let M = cv.Mat.ones(5, 5, cv.CV_8U);
+    let anchor = new cv.Point(-1, -1);
+    cv.erode(src, src, M, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());**/
+
     cv.imshow('canvaspreview', src);
+  }
+
+  //Watershed, Erode, etc: Noise cleaning in general
+  function cleanUp() {
+    let src = cv.imread('canvasInput');
+    let dst = new cv.Mat();
+    let gray = new cv.Mat();
+    let opening = new cv.Mat();
+    let coinsBg = new cv.Mat();
+    let coinsFg = new cv.Mat();
+    let distTrans = new cv.Mat();
+    let unknown = new cv.Mat();
+    let markers = new cv.Mat();
+    // gray and threshold image
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+    cv.threshold(gray, gray, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
+    // get background
+    let M = cv.Mat.ones(3, 3, cv.CV_8U);
+    cv.erode(gray, gray, M);
+    cv.dilate(gray, opening, M);
+    cv.dilate(opening, coinsBg, M, new cv.Point(-1, -1), 3);
+    // distance transform
+    cv.distanceTransform(opening, distTrans, cv.DIST_L2, 5);
+    cv.normalize(distTrans, distTrans, 1, 0, cv.NORM_INF);
+    // get foreground
+    cv.threshold(distTrans, coinsFg, 0.7 * 1, 255, cv.THRESH_BINARY);
+    coinsFg.convertTo(coinsFg, cv.CV_8U, 1, 0);
+    cv.subtract(coinsBg, coinsFg, unknown);
+    // get connected components markers
+    cv.connectedComponents(coinsFg, markers);
+    for (let i = 0; i < markers.rows; i++) {
+      for (let j = 0; j < markers.cols; j++) {
+          markers.intPtr(i, j)[0] = markers.ucharPtr(i, j)[0] + 1;
+          if (unknown.ucharPtr(i, j)[0] == 255) {
+              markers.intPtr(i, j)[0] = 0;
+          }
+      }
+    }
+    cv.cvtColor(src, src, cv.COLOR_RGBA2RGB, 0);
+    cv.watershed(src, markers);
+    // draw barriers
+    for (let i = 0; i < markers.rows; i++) {
+      for (let j = 0; j < markers.cols; j++) {
+        if (markers.intPtr(i, j)[0] == -1) {
+          src.ucharPtr(i, j)[0] = 255; // R
+          src.ucharPtr(i, j)[1] = 0; // G
+          src.ucharPtr(i, j)[2] = 0; // B
+        }
+      }
+    }
+    cv.imshow('canvasOutput', src);
+    src.delete(); dst.delete(); gray.delete(); opening.delete(); coinsBg.delete();
+    coinsFg.delete(); distTrans.delete(); unknown.delete(); markers.delete(); M.delete();
   }
 
   //This is slider related
