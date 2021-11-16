@@ -7,7 +7,7 @@ body {
 #imageSrc,
 #canvaspreview,
 #canvasOutput {
-  width: 45%;
+  width: 35%;
   height: auto;
 }
 
@@ -62,4 +62,17 @@ body {
 /* Mouse-over effects */
 .slider:hover {
   opacity: 1; /* Fully shown on mouse-over */
+}
+
+@media (max-width: 600px) {
+  #imageSrc,
+  #canvaspreview,
+  #canvasOutput {
+    width: 80%;
+    height: auto;
+  }
+
+  .container {
+    width: 100%;
+  }
 }

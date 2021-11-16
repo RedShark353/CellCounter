@@ -243,21 +243,33 @@
     coinsFg.delete(); distTrans.delete(); unknown.delete(); markers.delete(); M.delete();
   }**/
 
+  //Checkbox
+  var erodeCheck = document.getElementById('applyErode');
+
   //This is slider related
   var slider = document.getElementById("thresholdSlider");
   var sliderValue = document.getElementById("thresholdValue");
   sliderValue.innerHTML = slider.value; // Display the default slider value
 
   // Update the current slider value (each time you drag the slider handle)
-  slider.oninput = function() {
-    sliderValue.innerHTML = this.value;
+  erodeCheck.onchange = slider.oninput = function() {
+    sliderValue.innerHTML = slider.value;
 
     //Change threshold filter value
-    var thresholdValue = this.value;
+    var thresholdValue = slider.value;
     applyThreshold(thresholdValue*3);
     //cleanUp(thresholdValue*3) //Does not work, gets only external
     drawTheContours(thresholdValue*3)
   }
+
+  /**erodeCheck.onchange = function() {
+
+    //Change threshold filter value
+    var thresholdValue = slider.value;
+    applyThreshold(thresholdValue*3);
+    //cleanUp(thresholdValue*3) //Does not work, gets only external
+    drawTheContours(thresholdValue*3)
+  }**/
 </script>
 <script async src="https://docs.opencv.org/4.5.4/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
 </body>
