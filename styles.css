@@ -11,15 +11,25 @@ body {
   height: auto;
 }
 
+#inputDiv {
+  margin-top: 2%;
+}
+
 .container {
   width: 90%;
   margin: auto;
   text-align: center;
 }
 
+.container h2 {
+  margin-top: 2%;
+}
+
 /**Hide the result container in the beggining**/
 #resultDiv {
   display: none;
+  margin-bottom: 3%;
+  margin-top: 3%;
 }
 
 .slidecontainer {
@@ -68,7 +78,7 @@ body {
   #imageSrc,
   #canvaspreview,
   #canvasOutput {
-    width: 80%;
+    width: 90%;
     height: auto;
   }
 

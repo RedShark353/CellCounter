@@ -61,6 +61,7 @@
 
     //Show the divs with results
     document.getElementById("resultDiv").style.display = "block"
+    document.getElementById("resultDiv").scrollIntoView();
   }
 
   function calculateExternalContours(thresValue, method) {
@@ -262,14 +263,6 @@
     drawTheContours(thresholdValue*3)
   }
 
-  /**erodeCheck.onchange = function() {
-
-    //Change threshold filter value
-    var thresholdValue = slider.value;
-    applyThreshold(thresholdValue*3);
-    //cleanUp(thresholdValue*3) //Does not work, gets only external
-    drawTheContours(thresholdValue*3)
-  }**/
 </script>
 <script async src="https://docs.opencv.org/4.5.4/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
 </body>
